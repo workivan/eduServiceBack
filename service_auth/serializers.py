@@ -27,9 +27,7 @@ class LoginSerializer(serializers.Serializer):
             )
         user = authenticate(username=username, password=password)
         if user is None:
-            raise serializers.ValidationError(
-                'A user with this login and password was not found.'
-            )
+            raise serializers.ValidationError({"login": 'Нет пользователя с таким логином и паролем'})
         return {
             "user": {
                 "name": user.name,

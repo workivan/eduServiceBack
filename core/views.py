@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.models import Course
-from .serializers import CourseListSerializer, CourseSerializer
+from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer
 
 
 class CourseListAPIView(ListAPIView):
@@ -26,7 +26,7 @@ class CourseAPIView(APIView):
     serializer_class = CourseSerializer
 
     def get(self, request):
-        course = get_object_or_404(Course, course_id=request.GET["course_id"])
+        course = get_object_or_404(Course, id=request.GET["course_id"])
         serializer = self.serializer_class(course)
         return Response(serializer.data)
 
@@ -39,5 +39,19 @@ class CourseAPIView(APIView):
         )
 
 
+class LessonAPIView(APIView):
+    permission_classes = [AllowAny]
+    serializer_class = CourseSerializer
 
+    def get(self, request):
+        course = get_object_or_404(Course, id=request.GET["course_id"])
+        serializer = self.serializer_class(course)
+        return Response(serializer.data)
 
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            status=status.HTTP_201_CREATED,
+        )

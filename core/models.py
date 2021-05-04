@@ -6,7 +6,7 @@ from service_auth.models import Student
 
 
 class Course(models.Model):
-    course_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField(max_length=512, null=False)
     img = models.ImageField(upload_to="cards")
     students = models.ManyToManyField("service_auth.Student")
@@ -39,6 +39,11 @@ class Answer(models.Model):
     objects = models.Manager()
 
 
+class Lesson(models.Model):
+    lesson_number = models.SmallIntegerField(default=0)
+    course = models.ForeignKey("Course", related_name="lessons", on_delete=models.DO_NOTHING)
+
+
 class MediaType(models.TextChoices):
     pdf = "PDF"
     video = "VIDEO"
@@ -48,6 +53,6 @@ class Media(models.Model):
     name = models.TextField(max_length=128, null=False)
     type = models.CharField(max_length=10, choices=MediaType.choices, default=MediaType.pdf)
     file = models.FileField(upload_to="files")
-    course = models.ForeignKey("Course", related_name="medias", on_delete=models.DO_NOTHING)
+    course = models.ForeignKey("Lesson", related_name="medias", on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
