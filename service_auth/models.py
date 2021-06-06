@@ -88,8 +88,29 @@ class Keeper(Personal):
 class Student(Personal):
     city = models.CharField(
         max_length=64,
-        verbose_name="Имя"
+        verbose_name="Город",
+        null=False
     )
+    last_name = models.CharField(
+        max_length=64,
+        verbose_name="Отчество",
+        null=False,
+        default="empty"
+    )
+    job = models.TextField(
+        null=False,
+        default="empty",
+        verbose_name="Место работы"
+    )
+    position = models.TextField(
+        null=False,
+        default="empty",
+        verbose_name="Должность"
+    )
+
+    @property
+    def full_name(self):
+        return self.personal.name + " " + self.personal.surname + " " + self.last_name
 
 
 class Owner(Personal):

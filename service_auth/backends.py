@@ -24,10 +24,6 @@ def authenticate_credentials(request, token):
     return user, token
 
 
-def get_account(user_id):
-    return "account"
-
-
 class JWTAuthentication(authentication.BaseAuthentication):
     authentication_header_prefix = 'Bearer'
 

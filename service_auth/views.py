@@ -9,7 +9,6 @@ from django.forms.models import model_to_dict
 from .serializers import LoginSerializer, RegistrationSerializer, CustomUserSerializer
 from .models import CustomUser
 
-
 class UserRetrieveAPIView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = CustomUserSerializer
@@ -24,9 +23,6 @@ class UserRetrieveAPIView(RetrieveAPIView):
 
 
 class LoginAPIView(APIView):
-    """
-    Logs in an existing user.
-    """
     permission_classes = [AllowAny]
     serializer_class = LoginSerializer
 

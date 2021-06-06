@@ -19,15 +19,15 @@ class LoginSerializer(serializers.Serializer):
         password = data.get('password', None)
         if username is None:
             raise serializers.ValidationError(
-                'An login is required to log in.'
+                {"message": 'Заполните логин'}
             )
         if password is None:
             raise serializers.ValidationError(
-                'A password is required to log in.'
+                {"message": 'Заполните пароль'}
             )
         user = authenticate(username=username, password=password)
         if user is None:
-            raise serializers.ValidationError({"login": 'Нет пользователя с таким логином и паролем'})
+            raise serializers.ValidationError({"message": 'Нет пользователя с таким логином и паролем'})
         return {
             "user": {
                 "name": user.name,
@@ -39,9 +39,11 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(read_only=True)
+
     class Meta:
         model = CustomUser
-        fields = ('name', 'surname', 'user_type')
+        fields = ['name', 'surname', "username", 'user_type']
 
 
 class RegistrationSerializer(serializers.ModelSerializer):
