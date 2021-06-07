@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.generics import ListAPIView
+from rest_framework.parsers import FileUploadParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -80,8 +81,8 @@ class CourseAPIView(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
         )
@@ -105,17 +106,18 @@ class LessonListAPIView(ListAPIView):
 
 class LessonAPIView(APIView):
     permission_classes = [AllowAny]
-    serializer_class = CourseSerializer
+    serializer_class = LessonSerializer
+    parser_classes = [FileUploadParser]
 
     def get(self, request):
-        course = get_object_or_404(Course, id=request.GET["course_id"])
+        course = get_object_or_404(Course, id=request.GET["course"])
         serializer = self.serializer_class(course)
         return Response(serializer.data)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
         )
@@ -143,8 +145,16 @@ class TestAPIView(APIView):
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
         return Response(
             status=status.HTTP_201_CREATED,
         )
+
+    def put(self, request):
+        course = get_object_or_404(Test, course=request.data["course"], test_number=request.data["id"])
+        serializer = self.serializer_class(course, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

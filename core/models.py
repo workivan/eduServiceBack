@@ -12,7 +12,7 @@ def upload_to(instance, filename):
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField(max_length=512, null=False)
-    img = models.ImageField(upload_to=upload_to)
+    img = models.ImageField(upload_to=upload_to, null=True)
     students = models.ManyToManyField("service_auth.Student")
     description = models.TextField(max_length=1024, null=True)
 
@@ -20,7 +20,7 @@ class Course(models.Model):
 
 
 class Test(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, default=uuid.uuid4())
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, default=uuid.uuid4)
     question = models.TextField(max_length=1024, null=False, default="?")
     test_number = models.SmallIntegerField(default=0)
 
@@ -28,9 +28,10 @@ class Test(models.Model):
 
 
 class Answer(models.Model):
+    number = models.SmallIntegerField(default=1)
     text = models.TextField(max_length=1024, null=False, default="ок")
     correct = models.BooleanField(default=False)
-    cases = models.ForeignKey(Test, on_delete=models.DO_NOTHING)
+    cases = models.ForeignKey(Test, related_name="answers", on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
 
@@ -41,9 +42,9 @@ class Lesson(models.Model):
 
 
 class Media(models.Model):
-    title = models.TextField(max_length=128, null=False)
+    title = models.TextField(max_length=128, null=False, default="empty")
     body = models.TextField(null=False, default="empty")
-    course = models.ForeignKey("Lesson", related_name="medias", on_delete=models.DO_NOTHING)
+    lesson = models.OneToOneField(Lesson, related_name="content", default=1, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
 
