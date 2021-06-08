@@ -1,7 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView
 from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -14,7 +14,7 @@ from .serializers import CourseListSerializer, CourseSerializer, LessonSerialize
     CourseProgressSerializer, TestSerializer
 
 
-class CourseProgressListAPIView(ListAPIView):
+class CourseProgressAPIView(UpdateAPIView, ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = CourseProgressSerializer
     queryset = CourseProgress.objects.all()
@@ -33,6 +33,16 @@ class CourseProgressListAPIView(ListAPIView):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
+    def put(self, request):
+        st = get_object_or_404(Student, personal__username=request.data["username"])
+        progress = get_object_or_404(CourseProgress, student=st, course=request.data["course"])
+        if "solution" in request.data:
+            progress.test_passed = request.data["solution"]
+            progress.save()
+            return Response(
+                status=status.HTTP_200_OK,
+            )
 
 
 class StudentListAPIView(ListAPIView):
