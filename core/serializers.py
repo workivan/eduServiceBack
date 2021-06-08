@@ -18,28 +18,33 @@ class CourseListSerializer(serializers.ModelSerializer):
 
 
 class MediaSerializer(serializers.ModelSerializer):
-    content = serializers.FileField(write_only=True)
-    title = serializers.CharField(allow_blank=True)
-    body = serializers.CharField(allow_blank=True)
-
-    def to_internal_value(self, data):
-        return super().to_internal_value(data)
-
     class Meta:
         model = Media
-        fields = ['title', 'body', 'content']
+        fields = ['title', 'body']
 
 
 class LessonSerializer(serializers.ModelSerializer):
     content = MediaSerializer()
+    course = serializers.UUIDField(write_only=True)
 
     def create(self, validated_data):
-        last_id = Lesson.objects.filter(course=validated_data["course"]).last()
+        last_id = Lesson.objects.filter(course__id=validated_data["course"]).last()
         media = validated_data.pop("content")
+        validated_data["course"] = Course.objects.get(id=validated_data.get("course"))
         lesson = Lesson.objects.create(lesson_number=last_id.lesson_number + 1 if last_id else 1, **validated_data)
 
         Media.objects.create(lesson=lesson, title=media["title"], body=media["body"])
         return lesson
+
+    def update(self, instance, validated_data):
+        instance.course = Course.objects.get(id=validated_data.get("course"))
+        content = validated_data["content"]
+        instance.content.title = content.get("title", instance.content.title)
+        instance.content.body = content.get("title", instance.content.body)
+        instance.content.save()
+        instance.save()
+
+        return instance
 
     class Meta:
         model = Lesson

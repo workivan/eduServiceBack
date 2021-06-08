@@ -23,8 +23,8 @@ class UserManager(BaseUserManager):
 
     def create_user(self, username, password=None, name=None, **extra_fields):
         extra_fields.setdefault('is_admin', False)
-
-        return self._create_user(username, password, name, **extra_fields)
+        user = self._create_user(username, password, name, **extra_fields)
+        return user
 
     def create_superuser(self, username, password, name=None, **extra_fields):
         extra_fields.setdefault('is_admin', True)
@@ -89,13 +89,14 @@ class Student(Personal):
     city = models.CharField(
         max_length=64,
         verbose_name="Город",
-        null=False
+        null=False,
+        default="Москва"
     )
     last_name = models.CharField(
         max_length=64,
         verbose_name="Отчество",
         null=False,
-        default="empty"
+        default="Такой-то"
     )
     job = models.TextField(
         null=False,

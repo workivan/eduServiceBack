@@ -2,13 +2,14 @@ from django.shortcuts import get_object_or_404
 
 from rest_framework import status
 from rest_framework.generics import ListAPIView
-from rest_framework.parsers import FileUploadParser
+from rest_framework.parsers import MultiPartParser
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from core.models import Course, Lesson, CourseProgress, Test
 from service_auth.models import Student
+from .mixin import get_content_from_file
 from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer, StudentSerializer, \
     CourseProgressSerializer, TestSerializer
 
@@ -107,15 +108,26 @@ class LessonListAPIView(ListAPIView):
 class LessonAPIView(APIView):
     permission_classes = [AllowAny]
     serializer_class = LessonSerializer
-    parser_classes = [FileUploadParser]
 
     def get(self, request):
         course = get_object_or_404(Course, id=request.GET["course"])
         serializer = self.serializer_class(course)
         return Response(serializer.data)
 
+    def put(self, request):
+        lesson = get_object_or_404(Lesson, course=request.data["course"], lesson_number=request.data["lesson"])
+        serializer = self.serializer_class(lesson, data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            serializer.save()
+        return Response(
+            status=status.HTTP_200_OK,
+        )
+
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        data = request.data.dict()
+        media = get_content_from_file(data["file"])
+        data.update({"content": media})
+        serializer = self.serializer_class(data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response(

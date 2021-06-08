@@ -13,7 +13,6 @@ class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
     name = models.CharField(max_length=512, null=False)
     img = models.ImageField(upload_to=upload_to, null=True)
-    students = models.ManyToManyField("service_auth.Student")
     description = models.TextField(max_length=1024, null=True)
 
     objects = models.Manager()

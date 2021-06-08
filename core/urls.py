@@ -22,9 +22,9 @@ urlpatterns = [
     path('courses_list/', CourseListAPIView.as_view()),
     path('course/', CourseAPIView.as_view()),
     path('course/lessons/', LessonListAPIView.as_view()),
-    path('course/lessons/edit', LessonAPIView.as_view()),
+    path('course/lessons/edit/', LessonAPIView.as_view()),
     path('course/tests/', TestListAPIView.as_view()),
-    path('course/tests/edit', TestAPIView.as_view()),
+    path('course/tests/edit/', TestAPIView.as_view()),
     path('course/students/', StudentListAPIView.as_view()),
     path('progress/', CourseProgressListAPIView.as_view())
 ]
