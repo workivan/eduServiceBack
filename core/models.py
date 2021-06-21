@@ -5,30 +5,39 @@ from django.db import models
 from service_auth.models import Student
 
 
+class CourseProgress(models.Model):
+    course = models.ForeignKey("Course", on_delete=models.DO_NOTHING, related_name="course_progresses", null=False)
+    student = models.ForeignKey(Student, on_delete=models.DO_NOTHING, related_name="st_progresses", null=False)
+    test_passed = models.BooleanField(default=False)
+    current_lesson = models.SmallIntegerField(default=0)
+    display = models.BooleanField(default=True)
+    current_test = models.SmallIntegerField(default=0)
+
+
 def upload_to(instance, filename):
     return '/'.join(['cards', str(instance.id)])
 
 
 class Course(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, unique=True, editable=False)
-    name = models.CharField(max_length=512, null=False)
-    img = models.ImageField(upload_to=upload_to, null=True)
+    name = models.CharField(max_length=512, null=True)
+    img = models.ImageField(upload_to=upload_to)
     description = models.TextField(max_length=1024, null=True)
 
     objects = models.Manager()
 
 
 class Test(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, default=uuid.uuid4)
-    question = models.TextField(max_length=1024, null=False, default="?")
-    test_number = models.SmallIntegerField(default=0)
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING)
+    question = models.TextField(max_length=1024, null=False)
+    test_number = models.SmallIntegerField()
 
     objects = models.Manager()
 
 
 class Answer(models.Model):
     number = models.SmallIntegerField(default=1)
-    text = models.TextField(max_length=1024, null=False, default="ок")
+    text = models.TextField(max_length=1024)
     correct = models.BooleanField(default=False)
     cases = models.ForeignKey(Test, related_name="answers", on_delete=models.DO_NOTHING)
 
@@ -46,11 +55,3 @@ class Media(models.Model):
     lesson = models.OneToOneField(Lesson, related_name="content", default=1, on_delete=models.DO_NOTHING)
 
     objects = models.Manager()
-
-
-class CourseProgress(models.Model):
-    course = models.OneToOneField(Course, on_delete=models.DO_NOTHING, null=False)
-    student = models.OneToOneField(Student, on_delete=models.DO_NOTHING, null=False)
-    test_passed = models.BooleanField(default=False)
-    current_lesson = models.SmallIntegerField(default=0)
-    current_test = models.SmallIntegerField(default=0)

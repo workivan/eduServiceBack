@@ -61,6 +61,7 @@ class AnswerSerializer(serializers.ModelSerializer):
 
 class TestSerializer(serializers.ModelSerializer):
     answers = serializers.ListSerializer(child=AnswerSerializer())
+    test_number = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Test
@@ -89,12 +90,19 @@ class TestSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    lessons_number = serializers.SerializerMethodField(read_only=True)
+    img = serializers.FileField(required=False)
+
+    def get_lessons_number(self, obj):
+        les = obj.lessons.count()
+        return les
+
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'description', 'img']
+        fields = ['id', 'name', 'description', 'img', "lessons_number"]
 
 
 class StudentSerializer(serializers.ModelSerializer):
@@ -115,4 +123,4 @@ class CourseProgressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CourseProgress
-        fields = ['course', 'test_passed', 'current_lesson', 'current_test', 'student']
+        fields = ['course', 'test_passed', 'current_lesson', 'current_test', 'student', 'display']

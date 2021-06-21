@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 
 from rest_framework import serializers
 
-from .models import CustomUser
+from .models import CustomUser, Student
 
 
 class LoginSerializer(serializers.Serializer):
@@ -12,9 +12,6 @@ class LoginSerializer(serializers.Serializer):
     user = serializers.JSONField(read_only=True)
 
     def validate(self, data):
-        """
-        Validates user data.
-        """
         username = data.get('username', None)
         password = data.get('password', None)
         if username is None:
@@ -44,6 +41,26 @@ class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['name', 'surname', "username", 'user_type']
+
+
+class StudentSerializer(serializers.ModelSerializer):
+    personal = CustomUserSerializer()
+    password = serializers.CharField(max_length=128, write_only=True)
+    username = serializers.CharField(max_length=255, write_only=True)
+
+    def create(self, validated_data):
+        cuser = CustomUser.objects.create_user(username=validated_data["username"],
+                                               password=validated_data["password"],
+                                               **validated_data["personal"]
+                                               )
+        validated_data.pop("personal")
+        validated_data.pop("username")
+        validated_data.pop("password")
+        return Student.objects.create(personal=cuser, **validated_data)
+
+    class Meta:
+        model = Student
+        fields = "__all__"
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

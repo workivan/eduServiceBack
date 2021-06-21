@@ -77,15 +77,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         return token.decode('utf-8')
 
 
-class Personal(models.Model):
-    personal = models.OneToOneField(CustomUser, on_delete=models.CASCADE, rel="user")
-
-
-class Keeper(Personal):
-    pass
-
-
-class Student(Personal):
+class Student(models.Model):
+    personal = models.OneToOneField(CustomUser, on_delete=models.DO_NOTHING, related_name="user")
     city = models.CharField(
         max_length=64,
         verbose_name="Город",
@@ -112,7 +105,3 @@ class Student(Personal):
     @property
     def full_name(self):
         return self.personal.name + " " + self.personal.surname + " " + self.last_name
-
-
-class Owner(Personal):
-    pass

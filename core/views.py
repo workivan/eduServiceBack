@@ -1,8 +1,7 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
-from rest_framework.generics import ListAPIView, UpdateAPIView
-from rest_framework.parsers import MultiPartParser
+from rest_framework.generics import ListAPIView, UpdateAPIView, CreateAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +13,7 @@ from .serializers import CourseListSerializer, CourseSerializer, LessonSerialize
     CourseProgressSerializer, TestSerializer
 
 
-class CourseProgressAPIView(UpdateAPIView, ListAPIView):
+class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = CourseProgressSerializer
     queryset = CourseProgress.objects.all()
@@ -44,13 +43,23 @@ class CourseProgressAPIView(UpdateAPIView, ListAPIView):
                 status=status.HTTP_200_OK,
             )
 
+    def post(self, request, *args, **kwargs):
+        st = get_object_or_404(Student, personal__username=request.data["username"])
+        crs = get_object_or_404(Course, id=request.data["course"])
+        progress = CourseProgress.objects.get_or_create(student=st, course=crs)
+        progress[0].display = self.request.data["display"]
+        progress[0].save()
+        return Response(
+            status=status.HTTP_201_CREATED,
+        )
+
 
 class StudentListAPIView(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = StudentSerializer
     queryset = Student.objects.all()
 
-    def list(self, request):
+    def list(self, request, **kwargs):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
@@ -63,8 +72,11 @@ class CourseListAPIView(ListAPIView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        # if self.request.user.user_type == "ST":
-        #     return qs.filter(students__in=self.user.user)
+        if self.request.user.user_type == "ST":
+            st = Student.objects.get(personal=self.request.user)
+            progresses = CourseProgress.objects.filter(student=st, display=True)
+            qs = [progress.course for progress in progresses]
+            return qs
         return qs
 
     def list(self, request):

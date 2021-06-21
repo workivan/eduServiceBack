@@ -2,12 +2,13 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.generics import RetrieveAPIView
+from rest_framework.generics import RetrieveAPIView, CreateAPIView
 
 from django.forms.models import model_to_dict
 
-from .serializers import LoginSerializer, RegistrationSerializer, CustomUserSerializer
+from .serializers import LoginSerializer, RegistrationSerializer, CustomUserSerializer, StudentSerializer
 from .models import CustomUser
+
 
 class UserRetrieveAPIView(RetrieveAPIView):
     permission_classes = [AllowAny]
@@ -43,10 +44,20 @@ class RegistrationAPIView(APIView):
 
         return Response(
             {
-                "user": {
-                    "id": user.token,
-                },
                 "token": user.token
             },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class StudentsCreationAPIView(CreateAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = StudentSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
             status=status.HTTP_201_CREATED,
         )
