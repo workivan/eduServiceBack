@@ -74,7 +74,7 @@ class CourseListAPIView(ListAPIView):
     def get_queryset(self):
         if self.request.user.user_type == "ST":
             st = Student.objects.get(personal=self.request.user)
-            progresses = CourseProgress.objects.filter(student=st, display=True, finish=bool(self.request.GET["finish"]))
+            progresses = CourseProgress.objects.filter(student=st, display=True)
             qs = [progress.course for progress in progresses]
             return qs
         return super().get_queryset()
