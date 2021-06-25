@@ -9,6 +9,7 @@ class CourseProgress(models.Model):
     course = models.ForeignKey("Course", on_delete=models.DO_NOTHING, related_name="course_progresses", null=False)
     student = models.ForeignKey(Student, on_delete=models.DO_NOTHING, related_name="st_progresses", null=False)
     test_passed = models.BooleanField(default=False)
+    finish = models.BooleanField(default=False)
     current_lesson = models.SmallIntegerField(default=0)
     display = models.BooleanField(default=True)
     current_test = models.SmallIntegerField(default=0)
@@ -28,7 +29,7 @@ class Course(models.Model):
 
 
 class Test(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING)
+    course = models.ForeignKey(Course, on_delete=models.DO_NOTHING, related_name="tests")
     question = models.TextField(max_length=1024, null=False)
     test_number = models.SmallIntegerField()
 

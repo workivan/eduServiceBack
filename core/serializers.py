@@ -1,20 +1,18 @@
 from rest_framework import serializers
 
-from service_auth.models import Student
-from service_auth.serializers import CustomUserSerializer
+from service_auth.serializers import StudentSerializer
 from .models import Course, Media, Lesson, CourseProgress, Test, Answer
 
 
 class CourseListSerializer(serializers.ModelSerializer):
-    lessons = serializers.SerializerMethodField(read_only=True)
     img = serializers.FileField(required=False, allow_null=True)
 
-    def get_lessons(self, instance):
+    def get_lessons_count(self, instance):
         return instance.lessons.count()
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'img', 'lessons']
+        fields = ['id', 'name', 'img']
 
 
 class MediaSerializer(serializers.ModelSerializer):
@@ -65,7 +63,7 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Test
-        fields = ['course', 'question', 'answers', 'test_number']
+        fields = ['question', 'answers', 'test_number']
 
     def update(self, instance, validated_data):
         instance.question = validated_data.get('question', instance.question)
@@ -84,37 +82,30 @@ class TestSerializer(serializers.ModelSerializer):
         last_id = Test.objects.filter(course=validated_data["course"]).last()
         answers = validated_data.pop("answers")
         test = Test.objects.create(test_number=last_id.test_number + 1 if last_id else 1, **validated_data)
-        for answer in answers:
-            Answer.objects.create(cases=test, text=answer["text"], correct=answer["correct"])
+        for i, answer in enumerate(answers):
+            Answer.objects.create(number=i + 1, cases=test, text=answer["text"], correct=answer["correct"])
         return test
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    lessons_number = serializers.SerializerMethodField(read_only=True)
+    lessons_count = serializers.SerializerMethodField(read_only=True)
+    tests_count = serializers.SerializerMethodField(read_only=True)
     img = serializers.FileField(required=False)
 
-    def get_lessons_number(self, obj):
+    def get_lessons_count(self, obj):
         les = obj.lessons.count()
         return les
+
+    def get_tests_count(self, obj):
+        tes = obj.tests.count()
+        return tes
 
     def create(self, validated_data):
         return Course.objects.create(**validated_data)
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'description', 'img', "lessons_number"]
-
-
-class StudentSerializer(serializers.ModelSerializer):
-    personal = CustomUserSerializer(read_only=True)
-    last_name = serializers.CharField(allow_null=False)
-    city = serializers.CharField(allow_null=False)
-    position = serializers.CharField(allow_null=False)
-    job = serializers.CharField(allow_null=False)
-
-    class Meta:
-        model = Student
-        fields = ['personal', 'last_name', 'city', 'job', 'position']
+        fields = ['id', 'name', 'description', 'img', "lessons_count", "tests_count"]
 
 
 class CourseProgressSerializer(serializers.ModelSerializer):

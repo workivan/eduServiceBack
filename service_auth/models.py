@@ -91,12 +91,12 @@ class Student(models.Model):
         null=False,
         default="Такой-то"
     )
-    job = models.TextField(
+    place = models.TextField(
         null=False,
         default="empty",
         verbose_name="Место работы"
     )
-    position = models.TextField(
+    job = models.TextField(
         null=False,
         default="empty",
         verbose_name="Должность"

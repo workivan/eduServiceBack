@@ -24,7 +24,7 @@ class LoginSerializer(serializers.Serializer):
             )
         user = authenticate(username=username, password=password)
         if user is None:
-            raise serializers.ValidationError({"message": 'Нет пользователя с таким логином и паролем'})
+            raise serializers.ValidationError({"message": "Нет пользователя с таким логином и паролем"})
         return {
             "user": {
                 "name": user.name,
@@ -48,6 +48,12 @@ class StudentSerializer(serializers.ModelSerializer):
     password = serializers.CharField(max_length=128, write_only=True)
     username = serializers.CharField(max_length=255, write_only=True)
 
+    def validate_username(self, attr):
+        students = Student.objects.filter(personal__username=attr)
+        if len(students) > 0:
+            raise serializers.ValidationError('Ученик с таким никнеймом уже существует')
+        return attr
+
     def create(self, validated_data):
         cuser = CustomUser.objects.create_user(username=validated_data["username"],
                                                password=validated_data["password"],
@@ -60,7 +66,7 @@ class StudentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Student
-        fields = "__all__"
+        fields = '__all__'
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

@@ -8,8 +8,9 @@ from rest_framework.views import APIView
 
 from core.models import Course, Lesson, CourseProgress, Test
 from service_auth.models import Student
+from service_auth.serializers import StudentSerializer
 from .mixin import get_content_from_file
-from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer, StudentSerializer, \
+from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer, \
     CourseProgressSerializer, TestSerializer
 
 
@@ -22,7 +23,7 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
         qs = super().get_queryset()
         if "progress_student" in self.request.GET:
             student = get_object_or_404(Student, personal__username=self.request.GET["progress_student"])
-            return qs.filter(student=student)
+            return qs.filter(student=student, display=True)
         if "course_id" in self.request.GET:
             course = get_object_or_404(Course, id=self.request.GET["course_id"])
             return qs.filter(course=course)
@@ -71,13 +72,12 @@ class CourseListAPIView(ListAPIView):
     queryset = Course.objects.all()
 
     def get_queryset(self):
-        qs = super().get_queryset()
         if self.request.user.user_type == "ST":
             st = Student.objects.get(personal=self.request.user)
-            progresses = CourseProgress.objects.filter(student=st, display=True)
+            progresses = CourseProgress.objects.filter(student=st, display=True, finish=bool(self.request.GET["finish"]))
             qs = [progress.course for progress in progresses]
             return qs
-        return qs
+        return super().get_queryset()
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -132,9 +132,9 @@ class LessonAPIView(APIView):
     serializer_class = LessonSerializer
 
     def get(self, request):
-        course = get_object_or_404(Course, id=request.GET["course"])
+        course = get_object_or_404(Lesson, lesson_number=request.GET["lesson_id"], course=request.GET["course_id"])
         serializer = self.serializer_class(course)
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
         lesson = get_object_or_404(Lesson, course=request.data["course"], lesson_number=request.data["lesson"])
@@ -176,6 +176,11 @@ class TestListAPIView(ListAPIView):
 class TestAPIView(APIView):
     permission_classes = [AllowAny]
     serializer_class = TestSerializer
+
+    def get(self, request):
+        course = get_object_or_404(Test, test_number=request.GET["test_id"], course=request.GET["course_id"])
+        serializer = self.serializer_class(course)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
