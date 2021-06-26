@@ -38,7 +38,7 @@ class LessonSerializer(serializers.ModelSerializer):
         instance.course = Course.objects.get(id=validated_data.get("course"))
         content = validated_data["content"]
         instance.content.title = content.get("title", instance.content.title)
-        instance.content.body = content.get("title", instance.content.body)
+        instance.content.body = content.get("body", instance.content.body)
         instance.content.save()
         instance.save()
 
@@ -51,10 +51,11 @@ class LessonSerializer(serializers.ModelSerializer):
 
 class AnswerSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(read_only=True)
+    correct = serializers.BooleanField(write_only=True)
 
     class Meta:
         model = Answer
-        fields = ["text", "id"]
+        fields = ["text", "id", "correct"]
 
 
 class CheckAnswerSetializer(serializers.Serializer):
@@ -70,7 +71,7 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Test
-        fields = ['question', 'answers', 'test_number']
+        fields = ['question', 'answers', 'test_number', 'course']
 
     def update(self, instance, validated_data):
         instance.question = validated_data.get('question', instance.question)
@@ -90,7 +91,7 @@ class TestSerializer(serializers.ModelSerializer):
         answers = validated_data.pop("answers")
         test = Test.objects.create(test_number=last_id.test_number + 1 if last_id else 1, **validated_data)
         for i, answer in enumerate(answers):
-            Answer.objects.create(number=i + 1, cases=test, text=answer["text"], correct=answer["correct"])
+            Answer.objects.create(number=i + 1, cases=test, text=answer["text"], correct=bool(answer["correct"]))
         return test
 
 
