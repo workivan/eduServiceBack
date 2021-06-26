@@ -54,7 +54,14 @@ class AnswerSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Answer
-        fields = ["text", "correct", "id"]
+        fields = ["text", "id"]
+
+
+class CheckAnswerSetializer(serializers.Serializer):
+    course_id = serializers.UUIDField(required=True)
+    username = serializers.CharField(required=True)
+    test_id = serializers.IntegerField(required=True)
+    answer_id = serializers.IntegerField(required=True)
 
 
 class TestSerializer(serializers.ModelSerializer):
@@ -114,4 +121,4 @@ class CourseProgressSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CourseProgress
-        fields = ['course', 'test_passed', 'current_lesson', 'current_test', 'student', 'display']
+        fields = ['course', 'test_passed', 'current_lesson', 'current_test', 'student', 'display', "test_result"]

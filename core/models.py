@@ -10,9 +10,11 @@ class CourseProgress(models.Model):
     student = models.ForeignKey(Student, on_delete=models.DO_NOTHING, related_name="st_progresses", null=False)
     test_passed = models.BooleanField(default=False)
     finish = models.BooleanField(default=False)
-    current_lesson = models.SmallIntegerField(default=0)
+    current_lesson = models.SmallIntegerField(default=1)
     display = models.BooleanField(default=True)
-    current_test = models.SmallIntegerField(default=0)
+    current_test = models.SmallIntegerField(default=1)
+    test_result = models.SmallIntegerField(default=0)
+
 
 
 def upload_to(instance, filename):

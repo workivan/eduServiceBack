@@ -27,6 +27,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError({"message": "Нет пользователя с таким логином и паролем"})
         return {
             "user": {
+                "username": user.username,
                 "name": user.name,
                 "surname": user.surname,
                 "user_type": user.user_type,
@@ -36,11 +37,11 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(read_only=True)
+    username = serializers.CharField()
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'surname', "username", 'user_type']
+        fields = ['name', 'surname', "username", "username", 'user_type']
 
 
 class StudentSerializer(serializers.ModelSerializer):

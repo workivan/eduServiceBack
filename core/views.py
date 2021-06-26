@@ -9,9 +9,9 @@ from rest_framework.views import APIView
 from core.models import Course, Lesson, CourseProgress, Test
 from service_auth.models import Student
 from service_auth.serializers import StudentSerializer
-from .mixin import get_content_from_file
+from .mixin import get_content_from_file, get_current_test_number, check_answr_correct, update_result
 from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer, \
-    CourseProgressSerializer, TestSerializer
+    CourseProgressSerializer, TestSerializer, CheckAnswerSetializer
 
 
 class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
@@ -21,6 +21,10 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
 
     def get_queryset(self):
         qs = super().get_queryset()
+        if "student" in self.request.GET and "course_id" in self.request.GET:
+            student = get_object_or_404(Student, personal__username=self.request.GET["student"])
+            course = get_object_or_404(Course, id=self.request.GET["course_id"])
+            return qs.filter(course=course, student=student)
         if "progress_student" in self.request.GET:
             student = get_object_or_404(Student, personal__username=self.request.GET["progress_student"])
             return qs.filter(student=student, display=True)
@@ -83,6 +87,23 @@ class CourseListAPIView(ListAPIView):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data)
+
+
+class CheckAnswerAPI(UpdateAPIView):
+    permission_classes = [AllowAny]
+    queryset = CourseProgress.objects.all()
+    serializer_class = CheckAnswerSetializer
+
+    def put(self, request, *args, **kwargs):
+        data = self.serializer_class(data=request.data)
+        if data.is_valid(raise_exception=True):
+            progress = get_object_or_404(CourseProgress, student__personal__username=data.validated_data["username"],
+                                         course=data.validated_data["course_id"])
+            correct = check_answr_correct(data.validated_data["course_id"], data.validated_data["test_id"],
+                                          data.validated_data["answer_id"])
+            course = get_object_or_404(Course, id=data.validated_data["course_id"])
+            update_result(correct, progress, course.tests.count())
+            return Response(status=status.HTTP_200_OK)
 
 
 class CourseAPIView(APIView):
@@ -178,9 +199,14 @@ class TestAPIView(APIView):
     serializer_class = TestSerializer
 
     def get(self, request):
-        course = get_object_or_404(Test, test_number=request.GET["test_id"], course=request.GET["course_id"])
-        serializer = self.serializer_class(course)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        current_test_number = get_current_test_number(request.GET["course_id"], request.GET["username"])
+        if isinstance(current_test_number, int):
+            test = get_object_or_404(Test, test_number=current_test_number, course=request.GET["course_id"])
+            serializer = self.serializer_class(test)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response({
+            "test_number": 0
+        }, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
