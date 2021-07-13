@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import F
 
 from rest_framework import status
 from rest_framework.generics import ListAPIView, UpdateAPIView, CreateAPIView
@@ -131,6 +132,11 @@ class CourseAPIView(APIView):
             status=status.HTTP_201_CREATED,
         )
 
+    def delete(self, request):
+        course = get_object_or_404(Course, id=request.query_params["course_id"])
+        course.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class LessonListAPIView(ListAPIView):
     permission_classes = [AllowAny]
@@ -158,7 +164,11 @@ class LessonAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def put(self, request):
-        lesson = get_object_or_404(Lesson, course=request.data["course"], lesson_number=request.data["lesson"])
+        data = request.data.dict()
+        media = get_content_from_file(data["file"])
+        data.update({"content": media})
+
+        lesson = get_object_or_404(Lesson, course=data["course"], lesson_number=data["lesson"])
         serializer = self.serializer_class(lesson, data=request.data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
@@ -176,6 +186,14 @@ class LessonAPIView(APIView):
         return Response(
             status=status.HTTP_201_CREATED,
         )
+
+    def delete(self, request):
+        lesson = get_object_or_404(Lesson, course=request.query_params["course"],
+                                   lesson_number=request.query_params["lesson_number"])
+        lessons = Lesson.objects.filter(lesson_number__gt=lesson.lesson_number, course__id=lesson.course_id)
+        lessons.update(lesson_number=F("lesson_number") - 1)
+        lesson.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class TestListAPIView(ListAPIView):
@@ -199,14 +217,17 @@ class TestAPIView(APIView):
     serializer_class = TestSerializer
 
     def get(self, request):
-        current_test_number = get_current_test_number(request.GET["course_id"], request.GET["username"])
-        if isinstance(current_test_number, int):
-            test = get_object_or_404(Test, test_number=current_test_number, course=request.GET["course_id"])
-            serializer = self.serializer_class(test)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({
-            "test_number": 0
-        }, status=status.HTTP_200_OK)
+        try:
+            test_number = int(request.GET["username"])
+        except ValueError:
+            test_number = get_current_test_number(request.GET["course_id"], request.GET["username"])
+            if not isinstance(test_number, int):
+                return Response({
+                    "test_number": 0
+                }, status=status.HTTP_200_OK)
+        test = get_object_or_404(Test, test_number=test_number, course=request.GET["course_id"])
+        serializer = self.serializer_class(test)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
@@ -217,9 +238,17 @@ class TestAPIView(APIView):
         )
 
     def put(self, request):
-        course = get_object_or_404(Test, course=request.data["course"], test_number=request.data["id"])
-        serializer = self.serializer_class(course, data=request.data)
+        test = get_object_or_404(Test, course=request.data["course"], test_number=request.data["id"])
+        serializer = self.serializer_class(test, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        test = get_object_or_404(Test, course=request.query_params["course"],
+                                 test_number=request.query_params["test_number"])
+        tests = Test.objects.filter(test_number__gt=test.test_number, course__id=test.course_id)
+        tests.update(test_number=F("test_number") - 1)
+        test.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)

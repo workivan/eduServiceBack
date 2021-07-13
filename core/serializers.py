@@ -5,14 +5,21 @@ from .models import Course, Media, Lesson, CourseProgress, Test, Answer
 
 
 class CourseListSerializer(serializers.ModelSerializer):
-    img = serializers.FileField(required=False, allow_null=True)
+    lessons_count = serializers.SerializerMethodField(read_only=True)
+    tests_count = serializers.SerializerMethodField(read_only=True)
+    img = serializers.FileField(required=False)
 
-    def get_lessons_count(self, instance):
-        return instance.lessons.count()
+    def get_lessons_count(self, obj):
+        les = obj.lessons.count()
+        return les
+
+    def get_tests_count(self, obj):
+        tes = obj.tests.count()
+        return tes
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'img']
+        fields = ['id', 'name', 'img', "lessons_count", "tests_count"]
 
 
 class MediaSerializer(serializers.ModelSerializer):
