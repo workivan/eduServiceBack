@@ -43,7 +43,11 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
         st = get_object_or_404(Student, personal__username=request.data["username"])
         progress = get_object_or_404(CourseProgress, student=st, course=request.data["course"])
         if "solution" in request.data:
-            progress.test_passed = request.data["solution"]
+            if isinstance(request.data["solution"], bool):
+                progress.test_passed = request.data["solution"]
+            else:
+                progress.test_passed = False
+                progress.test_result = 0
             progress.save()
             return Response(
                 status=status.HTTP_200_OK,

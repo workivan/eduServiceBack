@@ -37,7 +37,7 @@ class LoginSerializer(serializers.Serializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    username = serializers.CharField()
+    username = serializers.CharField(max_length=255)
 
     class Meta:
         model = CustomUser
@@ -46,8 +46,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
 
 class StudentSerializer(serializers.ModelSerializer):
     personal = CustomUserSerializer()
-    password = serializers.CharField(max_length=128, write_only=True)
-    username = serializers.CharField(max_length=255, write_only=True)
+    control = serializers.CharField()
 
     def validate_username(self, attr):
         students = Student.objects.filter(personal__username=attr)
@@ -56,13 +55,8 @@ class StudentSerializer(serializers.ModelSerializer):
         return attr
 
     def create(self, validated_data):
-        cuser = CustomUser.objects.create_user(username=validated_data["username"],
-                                               password=validated_data["password"],
-                                               **validated_data["personal"]
-                                               )
+        cuser = CustomUser.objects.create_user(**validated_data["personal"])
         validated_data.pop("personal")
-        validated_data.pop("username")
-        validated_data.pop("password")
         return Student.objects.create(personal=cuser, **validated_data)
 
     class Meta:

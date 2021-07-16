@@ -83,23 +83,28 @@ class Student(models.Model):
         max_length=64,
         verbose_name="Город",
         null=False,
-        default="Москва"
+        default="-"
     )
     last_name = models.CharField(
         max_length=64,
         verbose_name="Отчество",
         null=False,
-        default="Такой-то"
+        default="-"
     )
     place = models.TextField(
         null=False,
-        default="empty",
+        default="-",
         verbose_name="Место работы"
     )
     job = models.TextField(
         null=False,
-        default="empty",
+        default="-",
         verbose_name="Должность"
+    )
+    control = models.CharField(
+        max_length=64,
+        null=False,
+        default="-"
     )
 
     @property

@@ -18,8 +18,6 @@ def get_current_test_number(course_id, username):
     count_of_test = Course.objects.get(id=course_id).tests.count()
     if progress.current_test < count_of_test + 1:
         return progress.current_test
-    progress.finish = True
-    progress.save()
     return None
 
 
