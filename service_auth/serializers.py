@@ -38,10 +38,11 @@ class LoginSerializer(serializers.Serializer):
 
 class CustomUserSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=255)
+    password = serializers.CharField(max_length=255, write_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ['name', 'surname', "username", "username", 'user_type']
+        fields = ['name', 'surname', "username", "username", 'user_type', 'password']
 
 
 class StudentSerializer(serializers.ModelSerializer):
