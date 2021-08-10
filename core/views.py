@@ -48,6 +48,7 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
             else:
                 progress.test_passed = False
                 progress.current_test = 1
+                progress.current_lesson = 1
                 progress.test_result = 0
             progress.save()
             return Response(
@@ -58,7 +59,8 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
         st = get_object_or_404(Student, personal__username=request.data["username"])
         crs = get_object_or_404(Course, id=request.data["course"])
         progress = CourseProgress.objects.get_or_create(student=st, course=crs)
-        progress[0].display = self.request.data["display"]
+        progress[0].display = self.request.data.get("display") if self.request.data.get("display") else progress[0].display
+        progress[0].current_lesson = self.request.data.get("lesson") if self.request.data.get("lesson") else progress[0].current_lesson
         progress[0].save()
         return Response(
             status=status.HTTP_201_CREATED,
@@ -174,7 +176,7 @@ class LessonAPIView(APIView):
         data.update({"content": media})
 
         lesson = get_object_or_404(Lesson, course=data["course"], lesson_number=data["lesson"])
-        serializer = self.serializer_class(lesson, data=request.data)
+        serializer = self.serializer_class(lesson, data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()
         return Response(
