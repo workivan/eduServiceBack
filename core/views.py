@@ -59,8 +59,10 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
         st = get_object_or_404(Student, personal__username=request.data["username"])
         crs = get_object_or_404(Course, id=request.data["course"])
         progress = CourseProgress.objects.get_or_create(student=st, course=crs)
-        progress[0].display = self.request.data.get("display") if self.request.data.get("display") else progress[0].display
-        progress[0].current_lesson = self.request.data.get("lesson") if self.request.data.get("lesson") else progress[0].current_lesson
+        if isinstance(self.request.data.get("display"), bool):
+            progress[0].display = bool(self.request.data.get("display"))
+        if isinstance(self.request.data.get("lesson"), int):
+            progress[0].current_lesson = int(self.request.data.get("lesson"))
         progress[0].save()
         return Response(
             status=status.HTTP_201_CREATED,
