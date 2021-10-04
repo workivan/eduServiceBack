@@ -13,6 +13,13 @@ def get_content_from_file(file):
     }
 
 
+def set_lessons_content(content):
+    return {
+        "title": content.title,
+        "body": content.body
+    }
+
+
 def get_current_test_number(course_id, username):
     progress = CourseProgress.objects.get(course=course_id, student__personal__username=username)
     count_of_test = Course.objects.get(id=course_id).tests.count()

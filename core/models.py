@@ -47,6 +47,7 @@ class Answer(models.Model):
 
 
 class Lesson(models.Model):
+    name = models.CharField(max_length=100, null=False, default="Урок")
     lesson_number = models.SmallIntegerField(default=0)
     course = models.ForeignKey("Course", related_name="lessons", on_delete=models.CASCADE)
 

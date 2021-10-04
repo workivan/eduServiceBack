@@ -1,4 +1,5 @@
 from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
 
 from rest_framework import serializers
 
@@ -49,11 +50,13 @@ class StudentSerializer(serializers.ModelSerializer):
     personal = CustomUserSerializer()
     control = serializers.CharField()
 
-    def validate_username(self, attr):
-        students = Student.objects.filter(personal__username=attr)
+    def validate(self, obj):
+        students = Student.objects.filter(personal__username=obj["personal"]["username"])
         if len(students) > 0:
-            raise serializers.ValidationError('Ученик с таким никнеймом уже существует')
-        return attr
+            raise serializers.ValidationError(
+                {"message":  'Ученик с таким никнеймом уже существует'}
+            )
+        return obj
 
     def create(self, validated_data):
         cuser = CustomUser.objects.create_user(**validated_data["personal"])
@@ -63,6 +66,25 @@ class StudentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Student
         fields = '__all__'
+
+
+class UpdateStudentSerializer(serializers.Serializer):
+    surname = serializers.CharField(required=True)
+    name = serializers.CharField(required=True)
+    username = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+    place = serializers.CharField(required=True)
+    job = serializers.CharField(required=True)
+    city = serializers.CharField(required=True)
+
+    def create(self, validated_data):
+        cuser = CustomUser.objects.filter(username=validated_data["username"])
+        cuser.update(surname=validated_data["surname"], name=validated_data["name"])
+        validated_data.pop("username")
+        validated_data.pop("surname")
+        validated_data.pop("name")
+        student = Student.objects.filter(personal=cuser.first())
+        return student.update(**validated_data)
 
 
 class RegistrationSerializer(serializers.ModelSerializer):

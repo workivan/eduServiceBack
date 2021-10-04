@@ -2,7 +2,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import F
 
 from rest_framework import status
-from rest_framework.generics import ListAPIView, UpdateAPIView, CreateAPIView
+from rest_framework.generics import ListAPIView, UpdateAPIView, CreateAPIView, RetrieveAPIView
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +10,8 @@ from rest_framework.views import APIView
 from core.models import Course, Lesson, CourseProgress, Test
 from service_auth.models import Student
 from service_auth.serializers import StudentSerializer
-from .mixin import get_content_from_file, get_current_test_number, check_answr_correct, update_result
+from .mixin import get_content_from_file, get_current_test_number, check_answr_correct, update_result, \
+    set_lessons_content
 from .serializers import CourseListSerializer, CourseSerializer, LessonSerializer, \
     CourseProgressSerializer, TestSerializer, CheckAnswerSetializer
 
@@ -77,6 +78,17 @@ class StudentListAPIView(ListAPIView):
     def list(self, request, **kwargs):
         queryset = self.get_queryset()
         serializer = self.serializer_class(queryset, many=True)
+        return Response(serializer.data)
+
+
+class StudentRetrieveAPIView(RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = StudentSerializer
+    queryset = Student.objects.all()
+
+    def get(self, request, **kwargs):
+        st = self.get_queryset().get(personal__username=request.query_params["student"])
+        serializer = self.serializer_class(st)
         return Response(serializer.data)
 
 
@@ -174,10 +186,12 @@ class LessonAPIView(APIView):
 
     def put(self, request):
         data = request.data.dict()
-        media = get_content_from_file(data["file"])
-        data.update({"content": media})
-
+        if "file" in data:
+            media = get_content_from_file(data["file"])
+            data.update({"content": media})
         lesson = get_object_or_404(Lesson, course=data["course"], lesson_number=data["lesson"])
+        if "content" not in data:
+            data.update({"content": set_lessons_content(lesson.content)})
         serializer = self.serializer_class(lesson, data=data)
         if serializer.is_valid(raise_exception=True):
             serializer.save()

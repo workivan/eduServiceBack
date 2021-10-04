@@ -30,6 +30,7 @@ class MediaSerializer(serializers.ModelSerializer):
 
 class LessonSerializer(serializers.ModelSerializer):
     content = MediaSerializer()
+    name = serializers.CharField(max_length=100, allow_null=False, allow_blank=False)
     course = serializers.UUIDField(write_only=True)
 
     def create(self, validated_data):
@@ -46,6 +47,7 @@ class LessonSerializer(serializers.ModelSerializer):
         content = validated_data["content"]
         instance.content.title = content.get("title", instance.content.title)
         instance.content.body = content.get("body", instance.content.body)
+        instance.name = validated_data["name"]
         instance.content.save()
         instance.save()
 
@@ -53,7 +55,7 @@ class LessonSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lesson
-        fields = ['course', 'lesson_number', 'content']
+        fields = ['course', 'lesson_number', 'content', 'name']
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -104,12 +106,18 @@ class TestSerializer(serializers.ModelSerializer):
 
 class CourseSerializer(serializers.ModelSerializer):
     lessons_count = serializers.SerializerMethodField(read_only=True)
+    lessons_names = serializers.SerializerMethodField(read_only=True)
     tests_count = serializers.SerializerMethodField(read_only=True)
     img = serializers.FileField(required=False)
 
     def get_lessons_count(self, obj):
         les = obj.lessons.count()
         return les
+
+    def get_lessons_names(self, obj):
+        lessons = obj.lessons.order_by("lesson_number")
+        names = [value.get("name") for value in lessons.values("name")]
+        return names
 
     def get_tests_count(self, obj):
         tes = obj.tests.count()
@@ -120,7 +128,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Course
-        fields = ['id', 'name', 'description', 'img', "lessons_count", "tests_count"]
+        fields = ['id', 'name', 'description', 'img', "lessons_count", "tests_count", "lessons_names"]
 
 
 class CourseProgressSerializer(serializers.ModelSerializer):
