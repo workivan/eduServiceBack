@@ -49,7 +49,6 @@ class CourseProgressAPIView(UpdateAPIView, CreateAPIView, ListAPIView):
             else:
                 progress.test_passed = False
                 progress.current_test = 1
-                progress.current_lesson = 1
                 progress.test_result = 0
             progress.save()
             return Response(
