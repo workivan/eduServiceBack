@@ -23,4 +23,4 @@ urlpatterns = [
                   path('admin/console_admin', admin.site.urls),
                   path('api/core/', include("core.urls")),
                   path('api/auth/', include("service_auth.urls"))
-              ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+              ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
