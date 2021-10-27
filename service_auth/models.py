@@ -46,23 +46,45 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         max_length=255,
         primary_key=True,
         unique=True,
-        verbose_name="login"
+        verbose_name="логин"
     )
     name = models.CharField(
         max_length=64,
-        verbose_name="name",
+        verbose_name="имя",
         null=False
     )
     surname = models.CharField(
         max_length=64,
-        verbose_name="surname",
+        verbose_name="фамилия",
         null=False
     )
-    user_type = models.CharField(max_length=50, choices=UserType.choices, default=UserType.keeper)
+    user_type = models.CharField(max_length=50,
+                                 choices=UserType.choices,
+                                 default=UserType.keeper,
+                                 verbose_name="тип пользователя")
     is_admin = models.BooleanField(default=False)
 
     objects = UserManager()
     USERNAME_FIELD = 'username'
+
+    def has_perm(self, perm, obj=None):
+        "Does the user have a specific permission?"
+        if self.is_admin:
+            return True
+        return False
+
+    def has_module_perms(self, app_label):
+        "Does the user have permissions to view the app `app_label`?"
+        # Simplest possible answer: Yes, always
+        if self.is_admin:
+            return True
+        return False
+
+    @property
+    def is_staff(self):
+        "Is the user a member of staff?"
+        # Simplest possible answer: All admins are staff
+        return self.is_admin
 
     @property
     def token(self):
@@ -75,6 +97,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             'exp': int(dt.strftime('%s'))
         }, settings.SECRET_KEY, algorithm='HS256')
         return token.decode('utf-8')
+
+    def __str__(self):
+        return self.name + " " + self.surname + " " + self.user.last_name
+
+    class Meta:
+        verbose_name_plural = "Пользователи"
 
 
 class Student(models.Model):
@@ -106,6 +134,9 @@ class Student(models.Model):
         null=False,
         default="-"
     )
+
+    def __str__(self):
+        return self.personal.name + " " + self.last_name
 
     @property
     def full_name(self):
