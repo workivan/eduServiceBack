@@ -69,14 +69,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def has_perm(self, perm, obj=None):
         "Does the user have a specific permission?"
-        if self.is_admin:
+        if self.user_type == UserType.owner or self.user_type == UserType.keeper:
             return True
         return False
 
     def has_module_perms(self, app_label):
         "Does the user have permissions to view the app `app_label`?"
         # Simplest possible answer: Yes, always
-        if self.is_admin:
+        if self.user_type == UserType.owner or self.user_type == UserType.keeper:
             return True
         return False
 
@@ -84,7 +84,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def is_staff(self):
         "Is the user a member of staff?"
         # Simplest possible answer: All admins are staff
-        return self.is_admin
+        return self.user_type == UserType.owner or self.user_type == UserType.keeper
 
     @property
     def token(self):
